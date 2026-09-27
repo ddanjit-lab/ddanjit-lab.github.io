@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>넵! - 단톡방 3개 동시 생존 게임</title>
+<meta name="description" content="회사·가족·친구 단톡이 동시에 터진다. 넵, ㅋㅋㅋ, ㅠㅠ, 읽씹 중 맞는 답을 빛의 속도로.">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;word-break:keep-all;height:100%;background:#9bb3c7;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR","Malgun Gothic",sans-serif;color:#191919;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+#app{position:relative;max-width:480px;height:100%;height:100dvh;margin:0 auto;background:#b2c7d9;display:flex;flex-direction:column}
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#a3b8cb}
+.logo{font-weight:900;font-size:22px;letter-spacing:-1px}
+.logo span{padding:0}
+.hs{display:flex;gap:12px;font-size:13px;font-weight:700}
+.hs b{font-size:17px}
+#rooms{flex:1;display:flex;flex-direction:column;gap:6px;padding:6px;min-height:0}
+.room{flex:1;min-height:0;background:#c9d8e5;border-radius:14px;display:flex;flex-direction:column;overflow:hidden;position:relative;transition:transform .1s}
+.room.shake{animation:sh .35s}
+@keyframes sh{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(4px)}}
+.room.bad{box-shadow:inset 0 0 0 3px #ef4444}
+.room.good{box-shadow:inset 0 0 0 3px #22c55e}
+.rh{display:flex;align-items:center;gap:6px;padding:6px 10px;background:rgba(255,255,255,.45);font-size:13px}
+.rh .ic{font-size:15px}
+.rh small{color:#6b7280}
+.rep{margin-left:auto;display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;font-weight:700}
+.rep .bar{width:70px;height:8px;background:rgba(0,0,0,.12);border-radius:4px;overflow:hidden}
+.rep .bar i{display:block;height:100%;width:100%;background:#22c55e;transition:width .2s,background .2s}
+.log{flex:1;min-height:0;padding:6px 10px;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 22px);mask-image:linear-gradient(to bottom,transparent 0,#000 22px);display:flex;flex-direction:column;justify-content:flex-end;gap:4px;overflow:hidden}
+.msg{display:flex;flex-direction:column;align-items:flex-start;max-width:86%;animation:pop .18s ease-out}
+.msg .nm{font-size:11px;color:#4b5563;margin:0 0 2px 4px}
+.msg .bb{background:#fff;padding:7px 10px;border-radius:4px 14px 14px 14px;font-size:14px;line-height:1.35;word-break:keep-all}
+.msg.me{align-self:flex-end;align-items:flex-end}
+.msg.me .bb{background:#fee500;border-radius:14px 4px 14px 14px}
+.msg.pending .bb{box-shadow:0 0 0 2px #f97316}
+.msg .rd{font-size:10px;color:#6b7280;margin-top:2px}
+@keyframes pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+.tbar{height:4px;background:rgba(0,0,0,.08)}
+.tbar i{display:block;height:100%;width:0;background:#f97316}
+.acts{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:6px}
+.acts button{border:0;border-radius:10px;padding:10px 0;font:inherit;font-weight:900;font-size:16px;cursor:pointer;background:#fff;color:#191919;box-shadow:0 2px 0 rgba(0,0,0,.12)}
+.acts button:active{transform:translateY(2px);box-shadow:none}
+.acts button[data-r="yes"]{background:#fee500}
+.acts button[data-r="ign"]{background:#e5e7eb;color:#6b7280}
+.ov{position:absolute;inset:0;background:rgba(20,28,36,.86);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:22px;text-align:center;color:#fff;z-index:10;overflow-y:auto}
+.hidden{display:none!important}
+.big{font-size:56px;font-weight:900;letter-spacing:-2px;line-height:1}
+.big span{background:#fee500;color:#191919;padding:0 12px;border-radius:14px}
+.sub{font-size:15px;color:#d1d5db;font-weight:600}
+.rules{background:rgba(255,255,255,.08);border-radius:14px;padding:12px 14px;text-align:left;font-size:14px;line-height:1.9;width:100%;max-width:340px}
+.rules b{display:inline-block;min-width:54px;text-align:center;background:#fff;color:#191919;border-radius:8px;padding:0 6px;margin-right:6px;font-size:13px}
+.rules b.y{background:#fee500}
+.rules b.g{background:#e5e7eb;color:#6b7280}
+.btn{width:100%;max-width:320px;border:0;border-radius:14px;padding:15px;font:inherit;font-weight:900;font-size:17px;cursor:pointer;background:#fee500;color:#191919}
+.btn.dark{background:#374151;color:#fff}
+.btn.ghost{background:transparent;color:#9ca3af;font-size:14px;padding:6px}
+.ending{font-size:30px;font-weight:900}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:320px}
+.st{background:rgba(255,255,255,.08);border-radius:12px;padding:9px}
+.st span{display:block;font-size:11px;color:#9ca3af}
+.st b{font-size:18px}
+.worst{width:100%;max-width:320px;background:#b2c7d9;border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:5px;color:#191919}
+.worst .cap{font-size:12px;color:#374151;font-weight:800;text-align:left}
+.adslot{display:none}
+#toast{position:absolute;left:50%;bottom:30px;transform:translateX(-50%);background:#111827;color:#fff;padding:9px 14px;border-radius:10px;font-size:13px;opacity:0;transition:opacity .3s;z-index:20;pointer-events:none;white-space:nowrap}
+#countdown{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:90px;font-weight:900;color:#fff;text-shadow:0 4px 20px rgba(0,0,0,.4);z-index:9;pointer-events:none}
+
+.lock{background:linear-gradient(180deg,#3a4656 0%,#232a33 100%);justify-content:flex-start;padding-top:48px;gap:8px}
+.lt{font-size:64px;font-weight:300;letter-spacing:-2px;line-height:1}
+.ld{font-size:14px;opacity:.8;margin-bottom:14px}
+.notis{width:100%;max-width:340px;display:flex;flex-direction:column;gap:6px}
+.noti{background:rgba(255,255,255,.16);border-radius:14px;padding:9px 12px;text-align:left}
+.noti.dim{opacity:.6}
+.noti .nh{display:flex;justify-content:space-between;font-size:11px;opacity:.75;margin-bottom:2px}
+.noti .nh span{background:#fee500;color:#191919;border-radius:4px;padding:0 4px;font-weight:800;font-size:10px}
+.noti b{font-size:14px}.noti b em{font-style:normal;opacity:.6;font-weight:500;margin-left:3px}
+.noti p{margin:1px 0 0;font-size:13.5px;opacity:.95}
+.how{max-width:340px;font-size:13.5px;line-height:1.65;text-align:left;opacity:.9;margin:10px 0 4px}
+.how b{background:rgba(255,255,255,.18);padding:0 4px;border-radius:4px;white-space:nowrap}
+.av{display:grid;grid-template-columns:1fr 1fr;gap:1px;width:22px;height:22px;border-radius:8px;overflow:hidden;flex:none}
+.av i{display:block}
+.av.one{display:block;border-radius:9px}
+.chatres{background:#b2c7d9;color:#191919;justify-content:flex-start;padding-top:0;gap:8px}
+.rtop{width:calc(100% + 44px);margin:0 -22px 6px;background:#a3b8cb;padding:12px;font-weight:700;font-size:15px;text-align:center}
+.sys{background:rgba(0,0,0,.14);color:#fff;font-size:12px;border-radius:12px;padding:4px 12px;max-width:320px;text-align:center}
+.rend{font-size:13px;color:#374151;margin-top:-2px}
+.rec{width:100%;max-width:320px;background:#fff;border-radius:6px 16px 16px 16px;padding:10px 14px;font-size:14px;line-height:1.8;text-align:left}
+.chatres .btn.dark{background:#fff;color:#191919}
+.chatres .btn.ghost{color:#374151}
+.chatres .worst{background:transparent;padding:0}
+</style>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="딴짓연구소">
+<meta property="og:title" content="넵!">
+<meta property="og:description" content="회사·가족·친구 단톡이 한꺼번에 울린다. 부장님 드립에 ㅠㅠ 보내면 끝.">
+<meta property="og:image" content="https://ddanjit.pages.dev/og/nep.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://ddanjit.pages.dev/nep.html">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+<body>
+<div id="app">
+  <header><div class="logo"><span>넵!</span></div><div class="hs"><div>처리 <b id="hScore">0</b></div><div>콤보 <b id="hCombo">0</b></div><div><b id="hTime">0.0</b>초</div></div></header>
+  <div id="rooms"></div>
+  <div id="countdown" class="hidden"></div>
+
+  <div id="title" class="ov lock">
+    <div class="lt">11:58</div><div class="ld">9월 27일 금요일</div>
+    <div class="notis">
+      <div class="noti"><div class="nh"><span>톡</span>방금</div><b>회사 단톡 <em>12</em></b><p>부장님: 내일 오전까지 보고서 부탁해요</p></div>
+      <div class="noti"><div class="nh"><span>톡</span>방금</div><b>우리 가족</b><p>엄마: 밥은 먹었니?</p></div>
+      <div class="noti"><div class="nh"><span>톡</span>1분 전</div><b>민수</b><p>오늘 7시 강남역 콜?</p></div>
+      <div class="noti dim"><div class="nh"><span>톡</span>3분 전</div><b>전 애인</b><p>자니?</p></div>
+    </div>
+    <p class="how">단톡방 세 개가 한꺼번에 울린다. 시킨 일엔 <b>넵</b>, 드립엔 <b>ㅋㅋㅋ</b>, 슬픈 얘기엔 <b>ㅠㅠ</b>, 광고랑 전 애인은 <b>읽씹</b>. 틀리거나 늦으면 그 방 평판이 깎이고, 바닥나면 끝.</p>
+    <button class="btn" id="bStart">단톡방 열기</button>
+    <div id="tBest" class="sub" style="font-size:12px"></div>
+  </div>
+
+  <div id="result" class="ov hidden chatres">
+    <div class="rtop" id="rRoom"></div>
+    <div class="sys" id="rSys"></div>
+    <div class="rend" id="rEnd"></div>
+    <div class="worst" id="rWorst"></div>
+    <div class="sys">오늘 기록</div>
+    <div class="rec" id="rStats"></div>
+    <button class="btn" id="bShare">캡처해서 보내기</button>
+    <button class="btn dark" id="bRevive">광고 보고 평판 회복하고 이어하기</button>
+    <button class="btn dark" id="bRetry">다시 하기</button>
+    <a class="btn ghost" href="index.html" style="text-decoration:none">다른 게임</a>
+    <div class="adslot" id="adBanner"></div>
+  </div>
+  <div id="adov" class="ov hidden" style="z-index:30"><div class="adslot" style="height:240px">광고 (데모)</div><div id="adt" class="sub"></div></div>
+  <div id="toast"></div>
+</div>
+<script>
+(()=>{
+'use strict';
+const $=s=>document.querySelector(s);
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const rnd=(a,b)=>a+Math.random()*(b-a);
+let BEST=0;try{BEST=+localStorage.getItem('nep_best')||0;}catch(e){}
+
+// ---------- content ----------
+// cat: yes(넵) lol(ㅋㅋㅋ) sad(ㅠㅠ) ign(읽씹)
+const ROOMS=[
+ {id:'work',name:'회사 단톡',sub:'(주)열정컴퍼니 12',av:['#6b7280','#9ca3af','#4b5563','#d1d5db'],end:['해고 엔딩','인사팀님이 나를 내보냈습니다.'],
+  msgs:[
+  ['부장님','내일 오전까지 보고서 부탁해요','yes'],['김과장','3시 회의 참석 가능하죠?','yes'],['부장님','그거 어떻게 됐어요?','yes'],['인사팀','오늘 회식 7시 고깃집입니다','yes'],
+  ['김과장','자료 공유드렸어요 확인 부탁해요','yes'],['부장님','잠깐 내 자리로 와볼래요?','yes'],['김과장','금요일까지 가능하죠?','yes'],['부장님','주간보고 양식 바뀌었어요 참고해요','yes'],['인사팀','연말정산 서류 이번주까지 제출 바랍니다','yes'],
+  ['부장님','세상에서 가장 가난한 왕은? 최저임금 ㅎㅎ','lol'],['부장님','소가 웃으면? 우하하 허허','lol'],['부장님','[사진] 우리 집 강아지 넥타이 맸어요','lol'],['부장님','왕이 넘어지면? 킹콩 ㅎㅎ','lol'],['김과장','[사진] 부장님 회식 때 노래방 점수 100점','lol'],['부장님','딸이 그린 내 얼굴입니다 ㅎㅎ [사진]','lol'],['부장님','바나나가 웃으면? 바나나킥 허허','lol'],
+  ['김과장','이번 분기 성과급 없답니다...','sad'],['인사팀','사내 식당 오늘부로 문 닫습니다','sad'],['김과장','서버 다 날아갔어요...','sad'],['김과장','에어컨 고장났대요 수리 2주 걸린대요','sad'],['인사팀','연차 신청이 반려되었습니다','sad'],['김과장','저 이번 달까지만 다녀요...','sad'],
+  ['(광고)','[Web발신] 신용대출 한도조회 무료','ign'],['(알 수 없음)','주식 리딩방에 초대되었습니다','ign'],['(광고)','[Web발신] 해외결제 990,000원 승인','ign'],['(알 수 없음)','택배 주소 불일치 확인 요망 http://bit.ly/x','ign']]},
+ {id:'fam',name:'가족 단톡',sub:'우리 가족 4',av:['#f59e0b','#fcd34d','#fb923c','#fde68a'],end:['등짝 엔딩','엄마님이 음성통화를 걸었습니다.'],
+  msgs:[
+  ['엄마','밥은 먹었니?','yes'],['엄마','주말에 올 거지?','yes'],['엄마','김치 보냈다 받아라','yes'],['아빠','아빠 생신 잊지 마라','yes'],['엄마','올 때 두부 한 모 사와','yes'],['아빠','용돈 보냈다 확인해','yes'],['엄마','비 온다 우산 챙겨','yes'],['엄마','엄마 카톡 프사 좀 바꿔줘','yes'],
+  ['아빠','[사진] 아빠가 찍은 노을 잘 찍었지?','lol'],['동생','아빠 코 고는 소리 녹음함 ㅋㅋ','lol'],['아빠','딸기가 직장을 잃으면? 딸기시럽','lol'],['동생','[사진] 강아지가 양말 먹음','lol'],['엄마','엄마 쇼츠 올렸다 봐봐 ㅋㅋ','lol'],['동생','엄마 방금 리모컨으로 전화 받음','lol'],
+  ['동생','나 시험 망함...','sad'],['아빠','아빠 주식 반토막 났다','sad'],['엄마','엄마 허리가 너무 아프다','sad'],['동생','폰 떨어뜨려서 액정 나감','sad'],['엄마','초코(강아지)가 밥을 안 먹네','sad'],
+  ['아빠','[공유] 충격! 이것 모르면 손해 (지라시)','ign'],['엄마','[공유] 이것만 먹으면 암 예방 카더라','ign'],['아빠','[공유] 내일 지구 멸망설 떴다','ign'],['(광고)','가족 요금제 결합 할인 안내','ign']]},
+ {id:'dm',name:'친구·개인톡',sub:'안 읽은 대화',av:['#60a5fa'],end:['손절 엔딩','민수님이 새 채팅방을 만들었습니다. (나 빼고)'],
+  msgs:[
+  ['민수','오늘 7시 강남역 콜?','yes'],['지은','내 생일파티 올 거지?','yes'],['태호','그 책 다 읽었으면 돌려줘','yes'],['지은','정산 부탁 1인 23,000원','yes'],['민수','내일 늦지 마라','yes'],['태호','여행 숙소 이걸로 예약할게?','yes'],
+  ['태호','[사진] 민수 자는 얼굴 ㅋㅋㅋ','lol'],['민수','나 방금 교수님한테 엄마라고 부름','lol'],['지은','[짤] 고양이가 키보드 위에서 잠','lol'],['민수','편의점에서 내 이름 부르길래 봤더니 라면이었음','lol'],['태호','지하철에서 졸다가 옆사람 어깨에 기댐','lol'],
+  ['지은','나 헤어졌어...','sad'],['민수','면접 떨어짐','sad'],['태호','지갑 잃어버림','sad'],['민수','월급이 통장을 스쳐감','sad'],['지은','코인 물렸어...','sad'],
+  ['전 애인','자니?','ign'],['전 애인','잘 지내?','ign'],['(모르는 사람)','안녕하세요 투자 관심 있으세요?','ign'],['(광고)','친구가 보낸 선물! 링크 눌러 받기','ign'],['고등학교 동창','오랜만이다~ 좋은 기회 있는데 만나서 얘기할래?','ign']]}
+];
+const REPLY={yes:['넵!','넵넵','넵 알겠습니다!','넵!!'],lol:['ㅋㅋㅋㅋㅋ','ㅋㅋㅋㅋㅋㅋㅋ','ㅋㅋㅋ 미쳤다'],sad:['ㅠㅠ','ㅠㅠㅠㅠ','헐 ㅠㅠ'],ign:[]};
+const LABEL={yes:'넵!',lol:'ㅋㅋㅋ',sad:'ㅠㅠ',ign:'읽씹'};
+const BACK={ // expected -> got -> sender's reaction
+ yes:{lol:['ㅋㅋ요...?','지금 웃었어요?'],sad:['왜 우세요...?','ㅠㅠ는 뭐지?'],ign:['읽고 답이 없네요?','?']},
+ lol:{yes:['넵...? 안 웃겼구나','넵이라니 ㅎ...'],sad:['왜 울어...','그렇게 슬픈 얘기였니'],ign:['읽씹 ㅎ','...']},
+ sad:{yes:['넵이라고...?','넵?????'],lol:['지금 웃음이 나와?','ㅋㅋ? 진짜 너무하다'],ign:['...','읽고 답도 없네']},
+ ign:{yes:['답장 올 줄 알았어 ㅎ','고객님 상담원 연결 중입니다'],lol:['ㅋㅋ 너도 나 보고 싶었지?','감사합니다 고객님! 링크 클릭 부탁드려요'],sad:['울지 마... 다시 만날래?','ㅠㅠ 고객님 대출 도와드릴게요']}
+};
+
+// ---------- state ----------
+const S={on:false,t:0,score:0,combo:0,maxCombo:0,rts:[],reps:{},pending:{},nextSpawn:0,mistakes:[],revived:false,endRoom:null};
+const els={};
+function buildRooms(){const box=$('#rooms');box.innerHTML='';for(const r of ROOMS){
+  const d=document.createElement('div');d.className='room';d.id='room-'+r.id;
+  d.innerHTML=`<div class="rh">${r.av.length>1?`<span class="av">${r.av.map(c=>`<i style="background:${c}"></i>`).join('')}</span>`:`<span class="av one" style="background:${r.av[0]}"></span>`}<b>${r.name}</b><small>${r.sub}</small><div class="rep">평판<div class="bar"><i></i></div></div></div><div class="log"></div><div class="tbar"><i></i></div><div class="acts"><button data-r="yes">넵!</button><button data-r="lol">ㅋㅋㅋ</button><button data-r="sad">ㅠㅠ</button><button data-r="ign">읽씹</button></div>`;
+  box.appendChild(d);els[r.id]={card:d,log:d.querySelector('.log'),bar:d.querySelector('.tbar i'),rep:d.querySelector('.rep .bar i')};
+  d.querySelectorAll('.acts button').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();answer(r.id,b.dataset.r);}));}}
+function addMsg(rid,who,text,me,pending){const log=els[rid].log;const m=document.createElement('div');m.className='msg'+(me?' me':'')+(pending?' pending':'');
+  m.innerHTML=(me?'':`<div class="nm">${who}</div>`)+`<div class="bb"></div>`;m.querySelector('.bb').textContent=text;log.appendChild(m);
+  while(log.children.length>4)log.removeChild(log.firstChild);
+  requestAnimationFrame(()=>{while(log.scrollHeight>log.clientHeight+2&&log.children.length>1)log.removeChild(log.firstChild);});return m;}
+function setRep(rid){const v=S.reps[rid];const i=els[rid].rep;i.style.width=Math.max(0,v)+'%';i.style.background=v>60?'#22c55e':v>30?'#f59e0b':'#ef4444';}
+function flash(rid,cls){const c=els[rid].card;c.classList.remove('good','bad','shake');void c.offsetWidth;c.classList.add(cls);if(cls==='bad')c.classList.add('shake');setTimeout(()=>c.classList.remove(cls,'shake'),380);}
+
+// ---------- audio ----------
+let AC=null;function ac(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC;}
+function tone(f,d,type='sine',v=.07,delay=0){const a=ac();if(!a)return;const o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.value=f;const t=a.currentTime+delay;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g).connect(a.destination);o.start(t);o.stop(t+d+.05);}
+const sMsg=()=>{tone(1320,.08,'sine',.05);tone(1760,.1,'sine',.04,.06);};
+const sOk=()=>tone(880,.08,'triangle',.05);
+const sBad=()=>{tone(200,.25,'square',.05);};
+
+// ---------- flow ----------
+function spawn(){const free=ROOMS.filter(r=>!S.pending[r.id]);if(!free.length)return;const r=pick(free);
+  const m=pick(r.msgs);const dur=Math.max(1.9,4.6-S.t*.034);
+  const el=addMsg(r.id,m[0],m[1],false,true);S.pending[r.id]={room:r,who:m[0],text:m[1],cat:m[2],t0:S.t,dur,el};sMsg();}
+function answer(rid,got){ac();if(!S.on)return;const p=S.pending[rid];if(!p)return;delete S.pending[rid];p.el.classList.remove('pending');els[rid].bar.style.width='0';
+  const rt=S.t-p.t0;
+  if(got!=='ign')addMsg(rid,'나',pick(REPLY[got]),true);else{const rd=document.createElement('div');rd.className='rd';rd.textContent='읽음';p.el.appendChild(rd);}
+  if(got===p.cat){S.score++;S.combo++;S.maxCombo=Math.max(S.maxCombo,S.combo);S.rts.push(rt);S.reps[rid]=Math.min(100,S.reps[rid]+4);flash(rid,'good');sOk();}
+  else{S.combo=0;S.reps[rid]-=25;flash(rid,'bad');sBad();try{navigator.vibrate&&navigator.vibrate(60);}catch(e){}
+    S.mistakes.push({room:p.room.name,who:p.who,text:p.text,got,exp:p.cat,back:null});const mk=S.mistakes[S.mistakes.length-1];
+    const back=pick(BACK[p.cat][got]);mk.back=back;setTimeout(()=>{if(S.on||true)addMsg(rid,p.who,back,false);},320);}
+  setRep(rid);updHud();checkEnd(rid);}
+function timeout(rid){const p=S.pending[rid];delete S.pending[rid];p.el.classList.remove('pending');els[rid].bar.style.width='0';
+  if(p.cat==='ign'){S.score++;const rd=document.createElement('div');rd.className='rd';rd.textContent='읽음 (무시 성공)';p.el.appendChild(rd);S.reps[rid]=Math.min(100,S.reps[rid]+2);}
+  else{S.combo=0;S.reps[rid]-=20;flash(rid,'bad');sBad();const back=pick(BACK[p.cat].ign);S.mistakes.push({room:p.room.name,who:p.who,text:p.text,got:'ign',exp:p.cat,back});setTimeout(()=>addMsg(rid,p.who,back,false),200);}
+  setRep(rid);updHud();checkEnd(rid);}
+function checkEnd(rid){if(S.reps[rid]<=0&&S.on){S.on=false;S.endRoom=ROOMS.find(r=>r.id===rid);setTimeout(showResult,900);}}
+function updHud(){$('#hScore').textContent=S.score;$('#hCombo').textContent=S.combo;}
+let last=0;
+function loop(now){const dt=Math.min(.05,(now-last)/1000||0);last=now;
+  if(S.on){S.t+=dt;$('#hTime').textContent=S.t.toFixed(1);
+    S.nextSpawn-=dt;if(S.nextSpawn<=0){spawn();S.nextSpawn=Math.max(.55,1.7-S.t*.017)*rnd(.7,1.3);}
+    for(const rid in S.pending){const p=S.pending[rid];const rem=1-(S.t-p.t0)/p.dur;els[rid].bar.style.width=Math.max(0,rem*100)+'%';if(rem<=0)timeout(rid);}}
+  requestAnimationFrame(loop);}
+function start(){buildRooms();Object.assign(S,{on:false,t:0,score:0,combo:0,maxCombo:0,rts:[],pending:{},nextSpawn:.2,mistakes:[],revived:false,endRoom:null});
+  for(const r of ROOMS){S.reps[r.id]=100;setRep(r.id);}updHud();$('#hTime').textContent='0.0';
+  $('#title').classList.add('hidden');$('#result').classList.add('hidden');
+  const cd=$('#countdown');cd.classList.remove('hidden');let n=3;cd.textContent=n;const iv=setInterval(()=>{n--;if(n<=0){clearInterval(iv);cd.classList.add('hidden');S.on=true;}else cd.textContent=n;},650);}
+
+// ---------- result ----------
+function grade(){const s=S.score;return s<12?'눈치 0단':s<25?'사회생활 새내기':s<45?'프로 넵러':s<70?'단톡 마스터':'인간 넵봇';}
+function worst(){const m=S.mistakes;if(!m.length)return null;return m.find(x=>x.room==='회사 단톡'&&x.got==='lol')||m.find(x=>x.exp==='sad'&&x.got==='lol')||m.find(x=>x.exp==='ign'&&x.got!=='ign')||m[0];}
+const avgRt=()=>S.rts.length?S.rts.reduce((a,b)=>a+b,0)/S.rts.length:0;
+function showResult(){
+  if(S.score>BEST){BEST=S.score;try{localStorage.setItem('nep_best',BEST);}catch(e){}}
+  $('#rRoom').textContent=S.endRoom.name;$('#rSys').textContent=S.endRoom.end[1];$('#rEnd').textContent=S.endRoom.end[0];
+  $('#rStats').innerHTML=`처리한 메시지 ${S.score}개<br>평균 답장 ${avgRt().toFixed(2)}초<br>최고 연속 ${S.maxCombo}번<br>눈치 레벨: ${grade()}`;
+  const w=worst();const box=$('#rWorst');box.innerHTML='';
+  if(w){box.classList.remove('hidden');
+    const a=document.createElement('div');a.className='msg';a.innerHTML='<div class="nm"></div><div class="bb"></div>';a.querySelector('.nm').textContent=w.who;a.querySelector('.bb').textContent=w.text;box.appendChild(a);
+    if(w.got!=='ign'){const b=document.createElement('div');b.className='msg me';b.innerHTML='<div class="bb"></div>';b.querySelector('.bb').textContent=pick(REPLY[w.got]);box.appendChild(b);}
+    else{const b=document.createElement('div');b.className='rd';b.style.textAlign='right';b.textContent='읽음';box.appendChild(b);}
+    const c=document.createElement('div');c.className='msg';c.innerHTML='<div class="nm"></div><div class="bb"></div>';c.querySelector('.nm').textContent=w.who;c.querySelector('.bb').textContent=w.back;box.appendChild(c);}
+  else box.classList.add('hidden');
+  $('#bRevive').classList.toggle('hidden',S.revived);
+  $('#result').classList.remove('hidden');$('#result').scrollTop=0;}
+
+// ---------- ads (연결 지점) ----------
+// 배너: #adBanner 자리에 애드센스 코드 삽입 (카카오 애드핏은 2026-09-02부터 초대·승인제)
+// 보상형: 애드센스 H5 게임 광고(adBreak type:'reward') 승인 후 연결. 그 전엔 데모 오버레이.
+const Ads={rewarded(){return new Promise(r=>{const o=$('#adov');o.classList.remove('hidden');let n=3;$('#adt').textContent=n+'초 후 보상';const iv=setInterval(()=>{n--;if(n<=0){clearInterval(iv);o.classList.add('hidden');r(true);}else $('#adt').textContent=n+'초 후 보상';},1000);});}};
+$('#bRevive').onclick=async()=>{const ok=await Ads.rewarded();if(!ok)return;S.revived=true;for(const r of ROOMS){S.reps[r.id]=Math.max(S.reps[r.id],60);setRep(r.id);}
+  for(const rid in S.pending){S.pending[rid].el.classList.remove('pending');delete S.pending[rid];els[rid].bar.style.width='0';}
+  $('#result').classList.add('hidden');S.nextSpawn=1;S.on=true;};
+$('#bStart').onclick=()=>{ac();start();};
+$('#bRetry').onclick=()=>start();
+
+// ---------- share ----------
+function wrap(g,text,maxW){const out=[];let line='';for(const ch of text){const t=line+ch;if(g.measureText(t).width>maxW&&line){out.push(line);line=ch;}else line=t;}if(line)out.push(line);return out;}
+function bubble(g,x,y,text,me,name){g.font='600 38px -apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif';const lines=wrap(g,text,600);const w=Math.max(...lines.map(l=>g.measureText(l).width))+48,h=lines.length*50+30;
+  let top=y;if(name&&!me){g.fillStyle='#374151';g.font='600 28px -apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif';g.fillText(name,x+8,y+28);top=y+40;g.font='600 38px -apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif';}
+  const bx=me?1080-80-w:x;g.fillStyle=me?'#fee500':'#fff';g.beginPath();g.roundRect(bx,top,w,h,[me?28:8,me?8:28,28,28]);g.fill();g.fillStyle='#191919';lines.forEach((l,i)=>g.fillText(l,bx+24,top+54+i*50));return top+h+22;}
+function makeCard(){const c=document.createElement('canvas');c.width=1080;c.height=1350;const g=c.getContext('2d');const F='-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif';
+  g.fillStyle='#b2c7d9';g.fillRect(0,0,1080,1350);g.fillStyle='#a3b8cb';g.fillRect(0,0,1080,150);
+  g.fillStyle='#fee500';g.beginPath();g.roundRect(70,40,190,80,18);g.fill();g.fillStyle='#191919';g.font='900 60px '+F;g.fillText('넵!',108,103);
+  g.font='700 34px '+F;g.fillText('단톡방 3개 동시 생존 게임',290,95);
+  g.font='900 88px '+F;g.fillText(S.endRoom.end[0],70,280);g.font='600 36px '+F;g.fillStyle='#374151';g.fillText(S.endRoom.end[1],70,335);
+  g.fillStyle='#191919';g.font='800 40px '+F;g.fillText(`처리 ${S.score}개 · 평균 ${avgRt().toFixed(2)}초 · ${grade()}`,70,410);
+  const w=worst();let y=470;
+  if(w){g.fillStyle='#374151';g.font='800 32px '+F;g.fillText('오늘의 대참사 · '+w.room,70,y);y+=30;y=bubble(g,70,y,w.text,false,w.who);if(w.got!=='ign')y=bubble(g,70,y,pick(REPLY[w.got]),true);y=bubble(g,70,y,w.back,false,w.who);}
+  g.fillStyle='#191919';g.font='800 40px '+F;g.textAlign='center';g.fillText('너는 몇 개 버팀? 넵!',540,1290);return c;}
+$('#bShare').onclick=async()=>{const c=makeCard();const blob=await new Promise(r=>c.toBlob(r,'image/png'));
+  const text=`[넵!] ${S.endRoom.end[0]} · 처리 ${S.score}개 · ${grade()} ㅋㅋ 너도 해봐 ${location.href.startsWith('http')?location.href:''}`;
+  try{const f=new File([blob],'nep.png',{type:'image/png'});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],text});return;}}catch(e){if(e&&e.name==='AbortError')return;}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='nep.png';document.body.appendChild(a);a.click();a.remove();
+  try{await navigator.clipboard.writeText(text);toast('이미지 저장 + 공유 문구 복사됨');}catch(e){toast('이미지를 저장했어요');}};
+function toast(t){const e=$('#toast');e.textContent=t;e.style.opacity=1;clearTimeout(toast._t);toast._t=setTimeout(()=>e.style.opacity=0,2000);}
+
+buildRooms();$('#tBest').textContent=BEST?('내 최고 기록 '+BEST+'개'):'';requestAnimationFrame(loop);
+window.__nep={S,answer,makeCard,showResult};
+})();
+</script>
+<script>(function(){var G=(location.pathname.split('/').pop()||'index').replace('.html','')||'index';var on=/pages\.dev$|github\.io$/.test(location.hostname);function T(k){if(!on)return;try{fetch('https://abacus.jasoncameron.dev/hit/ddanjit-lab/'+G+'-'+k,{keepalive:true});}catch(e){}}window.__track=T;T('visit');document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button,a');if(!b)return;var id=b.id||'';if(id==='bStart'||id==='bPlay'||b.classList.contains('train'))T('start');else if(id==='bShare')T('share');else if(id==='bRetry'||id==='bAgain'||id==='bNext'||id==='bFailRetry')T('retry');else if(id==='bRevive'||id==='bFailAd')T('revive');},true);var r=document.getElementById('result');if(r&&window.MutationObserver){new MutationObserver(function(){if(!r.classList.contains('hidden'))T('end');}).observe(r,{attributes:true,attributeFilter:['class']});}})();</script>
+</body>
+</html>
